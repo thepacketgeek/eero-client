@@ -67,20 +67,10 @@ class Eero(object):
                                             self.id_from_url(network_id)),
                                         cookies=self._cookie_dict))
 
-    def devices(self, network_id):
-        return self.refreshed(lambda: self.client.get(
-                                        'networks/{}/devices'.format(
-                                            self.id_from_url(network_id)),
-                                        cookies=self._cookie_dict))
+    def resources(self, network_id):
+        return list(self.networks(network_id)['resources'].keys())
 
-    def eeros(self, network_id):
+    def get_resource(self, resource, network_id):
         return self.refreshed(lambda: self.client.get(
-                                        'networks/{}/eeros'.format(
-                                            self.id_from_url(network_id)),
-                                        cookies=self._cookie_dict))
-
-    def reboot(self, device_id):
-        return self.refreshed(lambda: self.client.post(
-                                        'eeros/{}/reboot'.format(
-                                            self.id_from_url(device_id)),
+                                        f'networks/{self.id_from_url(network_id)}/{resource}',
                                         cookies=self._cookie_dict))
