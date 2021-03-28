@@ -34,6 +34,21 @@ eero = eero.Eero(session)
 def print_json(data):
     print(json.dumps(data, indent=4))
 
+COMMANDS = [
+    'devices',
+    'details',
+    'info',
+    'eeros',
+    'reboot',
+    'speedtest',
+    'clients',
+    'diagnostics',
+    'resources',
+    'support',
+    'forwards',
+    'reservations',
+    'settings',
+]
 
 if __name__ == '__main__':
     if eero.needs_login():
@@ -53,8 +68,7 @@ if __name__ == '__main__':
 
         parser = ArgumentParser()
         parser.add_argument("command",
-                            choices=['devices', 'details', 'info', 'eeros',
-                                     'reboot'],
+                            choices=COMMANDS,
                             help="info to print")
         parser.add_argument("--eero", type=int, help="eero to reboot")
         args = parser.parse_args()
@@ -62,15 +76,12 @@ if __name__ == '__main__':
         for network in account['networks']['data']:
             if args.command == 'info':
                 print_json(network)
-            if args.command == 'details':
+            elif args.command == 'details':
                 network_details = eero.networks(network['url'])
                 print_json(network_details)
-            if args.command == 'devices':
-                devices = eero.devices(network['url'])
-                print_json(devices)
-            if args.command == 'eeros':
-                eeros = eero.eeros(network['url'])
-                print_json(eeros)
-            if args.command == 'reboot':
-                reboot = eero.reboot(args.eero)
-                print_json(reboot)
+            elif args.command == 'resources':
+                resources = eero.resources(network['url'])
+                print_json(resources)
+            else:
+                output = eero.get_resource(args.command, network['url'])
+                print_json(output)
