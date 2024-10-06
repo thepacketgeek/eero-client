@@ -1,20 +1,33 @@
 #!/usr/bin/env python
 from argparse import ArgumentParser
+import os
 import json
 import eero
 import six
 
 
 class CookieStore(eero.SessionStorage):
-    def __init__(self, cookie_file):
-        from os import path
-        self.cookie_file = path.abspath(cookie_file)
+    def __init__(self):
+        self.cookie_file = None
+        self.__cookie = None
+
+    def from_file(cookie_file):
+        store = CookieStore()
+        store.cookie_file = os.path.abspath(cookie_file)
 
         try:
-            with open(self.cookie_file, 'r') as f:
-                self.__cookie = f.read()
+            with open(store.cookie_file, 'r') as f:
+                store.__cookie = f.read()
         except IOError:
-            self.__cookie = None
+            pass
+
+        return store
+            
+
+    def from_token(user_token):
+        store = CookieStore()
+        store.__cookie = user_token
+        return store
 
     @property
     def cookie(self):
@@ -23,12 +36,12 @@ class CookieStore(eero.SessionStorage):
     @cookie.setter
     def cookie(self, cookie):
         self.__cookie = cookie
-        with open(self.cookie_file, 'w+') as f:
-            f.write(self.__cookie)
+        if self.cookie_file:
+            with open(self.cookie_file, 'w+') as f:
+                f.write(self.__cookie)
 
 
-session = CookieStore('session.cookie')
-eero = eero.Eero(session)
+
 
 
 def print_json(data):
@@ -51,6 +64,12 @@ COMMANDS = [
 ]
 
 if __name__ == '__main__':
+    if token := os.getenv("EERO_TOKEN"):
+        session = CookieStore.from_token(token)
+    else:
+        session = CookieStore.from_file('session.cookie')
+    eero = eero.Eero(session)
+
     if eero.needs_login():
         parser = ArgumentParser()
         parser.add_argument("-l", help="your eero login (email address or phone number)")
@@ -85,3 +104,4 @@ if __name__ == '__main__':
             else:
                 output = eero.get_resource(args.command, network['url'])
                 print_json(output)
+
